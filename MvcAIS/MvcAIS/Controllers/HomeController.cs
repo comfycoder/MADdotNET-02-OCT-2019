@@ -23,7 +23,7 @@ namespace MvcAIS.Controllers
             return View();
         }
 
-        public IActionResult Privacy()
+        public IActionResult Videos()
         {
             return View();
         }
