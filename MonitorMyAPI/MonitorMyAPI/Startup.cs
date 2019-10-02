@@ -1,15 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using MonitorMyAPI.Models;
+using System;
 
 namespace MonitorMyAPI
 {
@@ -25,7 +21,29 @@ namespace MonitorMyAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // The following line enables Application Insights telemetry collection.
+            services.AddApplicationInsightsTelemetry();
+
+            services.AddLogging();
+
+            services.AddTransient<AdventureWorksLTContext>();
+
             services.AddControllers();
+
+            var connectionString = Configuration["DbConnectionString"];
+
+            // The following registers DbContextOptions for 
+            // dependency injection as scoped by default
+            // NOTE: The SQL Server database AccessToken is retrieved in the
+            // DbContext class to ensure it is current and valid for each request
+            services.AddDbContext<AdventureWorksLTContext>(options =>
+                options.UseSqlServer(connectionString,
+                sqlServerOptionsAction: sqlServerOptions =>
+                {
+                    sqlServerOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                })
+            );
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
